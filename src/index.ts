@@ -11,7 +11,7 @@ type LockOptions = {
   backOffOpts?: BackoffOptions
 }
 
-export default class LockManager extends WorkerEntrypoint<Env> {
+export class LockManager extends WorkerEntrypoint<Env> {
   async lock({
     key,
     maxLockAge = 60, // Seconds
@@ -40,15 +40,17 @@ export default class LockManager extends WorkerEntrypoint<Env> {
     return this.release(opts.key)
   }
 
-  async fetch() {
-    return new Response('ok')
-  }
-
   async release(key: string) {
     await this.env.DB.prepare('DELETE from lock_managers where key = ?').bind(key).run()
   }
 
   private async deleteExpiredLocks() {
     await this.env.DB.prepare('DELETE from lock_managers where expired_at <= ?').bind(Date.now() / 1000).run()
+  }
+}
+
+export default {
+  async fetch() {
+    return new Response('ok')
   }
 }
